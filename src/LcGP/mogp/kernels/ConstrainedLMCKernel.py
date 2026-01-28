@@ -70,24 +70,6 @@ class LMCKernelConstrained:
             # Pour chaque matrice L_q de taille output_dim x r, 
             # on paramétrise tous les éléments sauf la première ligne L_q[0, :]
             
-            # Logic from original code:
-            # if self.output_dim > 2: n_params = (output_dim - 1) * r
-            # else: (implicitly handled? The original code put param init inside if output_dim > 2)
-            # Wait, looking at original code lines 67-80:
-            # if self.output_dim > 2: ... init params ...
-            # else: ... nothing?
-            # And then line 92: params = np.concatenate(self.Lq_params) if self.output_dim>2 else []
-            # This implies if output_dim <= 2, there are NO free parameters for L_q? 
-            # Or maybe specific hardcoded behavior?
-            # Let's check _reconstruct_Lq in original code lines 151-155:
-            # if output_dim > 2: 
-            #    L_q[0,j] = ...
-            # else:
-            #    L_q[0,j] = -(1.0/u[0])*u[1]
-            #    L_q[1, j] = 1.0
-            # So for 2D, L_q is CONSTANT/FIXED based on u? That seems restrictive.
-            # But that's what the original code does. I will replicate it faithfully.
-            
             if self.output_dim > 2:
                 n_params = (self.output_dim - 1) * r
                 Lq_vec = np.random.uniform(-0.5, 0.5, n_params)
@@ -95,9 +77,7 @@ class LMCKernelConstrained:
                 self._bounds.extend([(-1.0, 1.0)] * n_params)
                 start_idx += n_params
             else:
-                 # For output_dim=2, we store empty parameters for Lq, as they are fixed determined by u?
-                 # Actually the original code does NOT append to Lq_params if dim<=2.
-                 pass
+                pass
 
         self.start_idx_Lq = start_idx
 

@@ -197,11 +197,6 @@ class LMCKernel:
         n1_q = int(n1/self.output_dim)
         n2_q = int(n2/self.output_dim) 
         
-        # Extraire les indices de sortie et les entrées spatiales
-        # X1_spatial = X1[:, :-1]
-        # X2_spatial = X2[:, :-1]
-        # output_idx1 = X1[:, -1].astype(int)
-        # output_idx2 = X2[:, -1].astype(int)
 
         x1 = X1[:n1_q,:-1]
         x2 = X2[:n2_q,:-1]
@@ -220,11 +215,6 @@ class LMCKernel:
             
             # Pour chaque paire d'indices de sortie, ajouter la contribution à K
             K += np.kron(B_q, K_spatial) 
-            # for i in range(n1):
-            #     for j in range(n2):
-            #         d1, d2 = output_idx1[i], output_idx2[j]
-            #         K[i, j] += B_q[d1, d2] * K_spatial[i, j]
-        
         return K
     
     def gradient(self, X1: np.ndarray, X2: np.ndarray = None) -> List[np.ndarray]:
@@ -249,12 +239,6 @@ class LMCKernel:
 
         x1 = X1[:n1_q,:-1]
         x2 = X2[:n2_q,:-1]
-        
-        # Extraire les indices de sortie et les entrées spatiales
-        # X1_spatial = X1[:, :-1]
-        # X2_spatial = X2[:, :-1]
-        # output_idx1 = X1[:, -1].astype(int)
-        # output_idx2 = X2[:, -1].astype(int)
         
         gradients = np.zeros((self.get_n_params(), n1, n2))
         
@@ -281,7 +265,6 @@ class LMCKernel:
                     
                     # Appliquer produit de Kronecker pour obtenir dK
                     gradients[param_idx] =np.kron(dB_q,K_spatial) 
-                    #self._apply_kronecker(dB_q, K_spatial, output_idx1, output_idx2, n1, n2)
                     param_idx += 1
         
         # Gradients par rapport aux facteurs d'échelle sigma_B
@@ -295,14 +278,12 @@ class LMCKernel:
             
             # Appliquer produit de Kronecker pour obtenir dK
             gradients[param_idx] = np.kron(dB_q,K_spatial) 
-            #self._apply_kronecker(dB_q, K_spatial, output_idx1, output_idx2, n1, n2)
             param_idx += 1
         
         # Gradients par rapport aux hyperparamètres des noyaux de base
         for q, kernel in enumerate(self.base_kernels):
             # Calculer les gradients du noyau spatial
             dK_spatial_list = kernel.gradient(x1, x2)
-            #dK_spatial_list = kernel.gradient(X1_spatial, X2_spatial)
             
             # Obtenir la matrice de corégionalisation B_q
             B_q = self.get_B(q)
@@ -311,7 +292,6 @@ class LMCKernel:
             for dK_spatial in dK_spatial_list:
                 # Appliquer produit de Kronecker pour obtenir dK
                 gradients[param_idx] = np.kron(B_q, dK_spatial) 
-                #self._apply_kronecker(B_q, dK_spatial, output_idx1, output_idx2, n1, n2)
                 param_idx += 1
         
         return gradients
@@ -397,33 +377,6 @@ class LMCKernel:
         B_unit = Lq @ Lq.T
         
         return B_unit
-
-    # def _apply_kronecker(self, B_matrix: np.ndarray, K_spatial: np.ndarray, 
-    #                 output_idx1: np.ndarray, output_idx2: np.ndarray, n1: int, n2: int) -> np.ndarray:
-    #     """
-    #     Applique l'équivalent d'un produit de Kronecker entre B_matrix et K_spatial
-        
-    #     Args:
-    #         B_matrix: Matrice B_q ou dB_q de forme (output_dim, output_dim)
-    #         K_spatial: Matrice de covariance spatiale de forme (n1, n2)
-    #         output_idx1: Indices de sortie pour X1
-    #         output_idx2: Indices de sortie pour X2
-    #         n1: Nombre de points dans X1
-    #         n2: Nombre de points dans X2
-            
-    #     Returns:
-    #         Matrice résultante de forme (n1, n2)
-    #     """
-    #     # Initialiser la matrice résultante
-    #     result = np.zeros((n1, n2))
-        
-    #     # Pour chaque paire d'indices de sortie, appliquer le produit
-    #     for i in range(n1):
-    #         for j in range(n2):
-    #             d1, d2 = output_idx1[i], output_idx2[j]
-    #             result[i, j] = B_matrix[d1, d2] * K_spatial[i, j]
-        
-    #     return result
     
     def get_n_params(self) -> int:
         """Retourne le nombre total d'hyperparamètres."""
@@ -446,5 +399,3 @@ class LMCKernel:
 
             vec = L_pca[mask]
             self.Lq_unit_params[q] = vec.flatten() #[1:, :].
-            #self.sigma_B_params[q] = L_pca[0,0] #
-           # print("Lq_params after PCA init : ", self.Lq_params[q], q)

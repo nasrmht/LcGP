@@ -46,17 +46,11 @@ def main():
         seed=42
     )
     
-    # Note: efficient likelihood might not be supported if we have multiple base kernels?
-    # Actually LMCKernelConstrained has list of base kernels. If len(base_kernels) > 1, efficient lik is likely not used 
-    # based on checking len(base_kernels)==1 in core.py. 
-    # Here len=3. So naive likelihood will be used.
-    
+    # Note: efficient likelihood is not supported if we have multiple base kernels
     model = MOGPR(kernel=kernel, use_efficient_lik=False, verbose=False)
     
     # 3. Fit
     print("Fitting model...")
-    # use_init_pca is for LMCKernel, Constrained might handle init differently or not support it fully yet 
-    # (init_L_from_pca is implemented in Constrained kernel to project init onto constraint)
     model.fit(X_train, Y_train, n_restarts=5, seed=42, use_init_pca=True)
     
     # 4. Verify Constraint on Matrix B

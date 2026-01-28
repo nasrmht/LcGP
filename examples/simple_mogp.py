@@ -15,10 +15,6 @@ def main():
     y2 = np.cos(X_train).flatten() + np.random.normal(0, 0.05, size=n_per_output)
     
     # Combine outputs: MOGPR expects y of shape (n_samples, output_dim)
-    # But currently it seems the implementation prepares/stacks data internally?
-    # Let's check prep_data. Usually MOGPR fits on (X, Y) where Y is (n, output_dim)
-    # The X provided should be (n, input_dim).
-    
     Y_train = np.column_stack([y1, y2])
     
     X_test = np.linspace(0, 10, 100).reshape(-1, 1)
@@ -42,10 +38,6 @@ def main():
     print("Predicting...")
     y_pred, y_var = model.predict(X_test, return_cov=True)
     print("y_var shape :", y_var)
-    # y_pred is (output_dim, n_test) or (n_test, output_dim)?
-    # predict returns y_pred of shape (output_dim, n_test).T -> (n_test, output_dim) ?
-    # Let's verify prediction shape in code.
-    # Code says: y_pred = y_pred.reshape(output_dim, n_test).T  -> So it is (n_test, output_dim)
     
     y1_pred = y_pred[:, 0]
     y2_pred = y_pred[:, 1]
