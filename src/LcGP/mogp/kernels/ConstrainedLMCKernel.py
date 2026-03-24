@@ -247,6 +247,40 @@ class LMCKernelConstrained:
         dB_q = (dL_q @ L_q.T + L_q @ dL_q.T) * sigma_B
         return dB_q
 
+    def _compute_dB(self):
+        """
+        Calcule la dérivée de B par rapport à tous les paramètres de B (utile en ICM)
+        
+        Args:
+            
+            
+        Returns:
+            Liste des Matrice dB_q de forme (output_dim, output_dim)
+        """
+        dB = []
+        if self.output_dim > 2:
+            for q in range(len(self.base_kernels)):
+                # Calculer la matrice de covariance spatiale k_q(x1, x2)
+                
+                # Obtenir la matrice L_q complète et sigma_B
+                L_q = self._reconstruct_Lq(q)
+                sigma_B = self.sigma_B_params[q]
+                
+                # Parcourir tous les paramètres (lignes 2 à output_dim-1)
+                for i in range(1, self.output_dim):
+                    for j in range(self.rank[q]):
+                        # Calculer dB_q par rapport à L_q[i,j]
+                        dB_q = self._compute_dB_q_dL(q, i, j, L_q, sigma_B)
+                        dB.append(dB_q)
+        
+        # On ajoute la dérivée de B par rapport à sigma_B est simplement B_unit = L_q @ L_q.T
+        for q in range(len(self.base_kernels)):
+            dB_q = self._compute_dB_q_dsigma(q)
+            dB.append(dB_q)
+        
+        return dB
+
+
     def _compute_dB_q_dsigma(self, q: int) -> np.ndarray:
         L_q = self._reconstruct_Lq(q)
         return L_q @ L_q.T
