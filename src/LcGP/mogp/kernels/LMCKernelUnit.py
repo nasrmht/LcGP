@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from .Kernel import Kernel
 
 
-class LMCKernel:
+class LMCKernelUnit:
     """
     Implémentation du noyau du modèle de corégionalisation linéaire (LMC).
     

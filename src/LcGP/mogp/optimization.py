@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from typing import List, Tuple, Dict, Optional, Union, Callable
 from dataclasses import dataclass
 from scipy.stats.qmc import LatinHypercube 
-from .kernels.LCMKernel import LMCKernel
+from .kernels.LMCKernel import LMCKernel
 from ..utils.data_utils import compute_kernel_eigendecomposition, prepare_data
 from .likelihoods.log_likelihood_efficient import compute_log_likelihood_efficient, compute_log_likelihood_gradient_efficient
 from .likelihoods.log_likelihood_naive import compute_log_likelihood_naive, compute_log_likelihood_gradient_naive

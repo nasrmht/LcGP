@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from scipy.stats.qmc import LatinHypercube 
 from joblib import Parallel, delayed
 import time
-from .kernels.LCMKernel import LMCKernel
+from .kernels.LMCKernel import LMCKernel
 from ..utils.data_utils import compute_kernel_eigendecomposition, prepare_data
 from .likelihoods.log_likelihood_efficient import compute_log_likelihood_efficient, compute_log_likelihood_gradient_efficient
 from .likelihoods.log_likelihood_naive import compute_log_likelihood_naive, compute_log_likelihood_gradient_naive
@@ -460,23 +460,52 @@ class MOGPR:
                 # Calculer la covariance prédictive
                 K_test_test = self.kernel(X_test_stacked)
                 
-                if full_cov:
+                #if full_cov:
                     # Covariance complète
-                    var_pred = K_test_test - v.T @ v
-                else:
-                    # Diagonale seulement (variances)
-                    var_pred = np.diag(K_test_test) - np.diag(v.T@v)
-                    var_pred = var_pred.reshape(output_dim, n_test).T
+                var_pred = K_test_test - v.T @ v
             else:
-                X_train_spatial = self.X_train[:n, :-1]
-                K_x_star = self.kernel.base_kernels[0](X_test, X_train_spatial)
-                A = self.kernel.get_B(0).dot(self.U_C)
-                B = K_x_star.dot(self.U_R)
+                if self.L is None:
+                    # Calculer la décomposition de Cholesky si nécessaire
+                    K = self.kernel(self.X_train)
+                    noise_variance = np.exp(self.log_noise_variance)
+                    K_noisy = K + noise_variance * np.eye(K.shape[0])
+                    self.L = linalg.cholesky(K_noisy, lower=True)
+            
+                # Résoudre le système K_noisy^(-1) @ K_star
+                K_star = self.kernel(self.X_train, X_test_stacked)
+                v = linalg.solve_triangular(self.L, K_star, lower=True)
+                
+                # Calculer la covariance prédictive
+                K_test_test = self.kernel(X_test_stacked)
+                
+                #if full_cov:
+                    # Covariance complète
+                var_pred = K_test_test - v.T @ v
+                # else:
+                #     # Diagonale seulement (variances)
+                #     var_pred = np.diag(K_test_test) - np.diag(v.T@v)
+                #     var_pred = var_pred.reshape(output_dim, n_test).T
+           # else:
+                # X_train_spatial = self.X_train[:n, :-1]
+                # # K_x_star = self.kernel.base_kernels[0](X_test, X_train_spatial)
+                # # A = self.kernel.get_B(0).dot(self.U_C)
+                # # B = K_x_star.dot(self.U_R)
 
-                k_C_xx = np.diag(self.kernel.get_B(0))
-                k_R_xx = np.diag(self.kernel.base_kernels[0](X_test))
-                BA = np.kron(A, B)
-                var_pred = (np.kron(k_C_xx, k_R_xx) - np.sum(BA**2*self.S_kron_inv, 1) + np.exp(self.log_noise_variance)).reshape(output_dim, n_test).T
+                # # k_C_xx = np.diag(self.kernel.get_B(0))
+                # # k_R_xx = np.diag(self.kernel.base_kernels[0](X_test))
+                
+                # K_star = self.kernel(self.X_train, X_test_stacked)
+                # K = self.kernel(self.X_train)
+                # noise_variance = np.exp(self.log_noise_variance)
+                # K_noisy = K + noise_variance * np.eye(K.shape[0])
+                # self.L = linalg.cholesky(K_noisy, lower=True)
+
+                # v = linalg.solve_triangular(self.L, K_star, lower=True)
+                # K_xx_star = self.kernel(X_test_stacked, X_test_stacked)
+                # #print("v shape kron : ", K_star.shape)
+                # var_pred = K_xx_star-v.T@v
+                # BA = np.kron(A, B)
+                # var_pred = (np.kron(k_C_xx, k_R_xx) - np.sum(BA**2*self.S_kron_inv, 1) + np.exp(self.log_noise_variance)).reshape(output_dim, n_test).T
         else:
             # Par défaut, retourner seulement les variances prédites
             if not self.use_efficient_lik:
@@ -563,7 +592,7 @@ class MOGPR:
         
         # Prédire la moyenne et la covariance
         y_mean, y_cov = self.predict(X_test, return_cov=True, full_cov=True)
-        
+        print("y_cov shape : ", y_cov.shape)
         n_test = X_test.shape[0]
         output_dim = self.kernel.output_dim
         

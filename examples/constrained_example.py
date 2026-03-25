@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from LcGP.mogp.core import MOGPR
-from LcGP.mogp.kernels.LCMKernel import LMCKernel
+from LcGP.mogp.kernels.LMCKernel import LMCKernel
 from LcGP.mogp.kernels.Kernel import RBFKernel
 
 def main():
@@ -13,8 +13,8 @@ def main():
     X_train = np.sort(np.random.uniform(0, 10, size=(n_per_output, 1)), axis=0)
     
     # True functions
-    y1_true = np.sin(X_train).flatten()
-    y2_true = -np.sin(X_train).flatten() # Exactly opposite
+    y1_true = np.exp(np.sin(X_train)).flatten()
+    y2_true = -np.exp(np.sin(X_train)).flatten() # Exactly opposite
     
     # Add some noise
     noise_lvl = 0.0
@@ -26,8 +26,8 @@ def main():
     
     # Test points
     X_test = np.linspace(0, 10, 200).reshape(-1, 1)
-    y1_test_true = np.sin(X_test).flatten()
-    y2_test_true = -np.sin(X_test).flatten()
+    y1_test_true = np.exp(np.sin(X_test)).flatten()
+    y2_test_true = -np.exp(np.sin(X_test)).flatten()
     
     # 2. Setup Model
     print("Setting up MOGP model with LMC Kernel...")

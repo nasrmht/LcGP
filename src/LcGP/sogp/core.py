@@ -8,7 +8,7 @@ import copy
 #import time
 
 class so_GPRegression:
-    def __init__(self, kernel=None, mean_prior = 'zero', var_noise=1e-13, noisy_data = True, use_kernel_grad = False, optimizer='L-BFGS-B', parallel=False):
+    def __init__(self, kernel=None, mean_prior = 'zero', var_noise=1e-13, noisy_data = True, use_kernel_grad = True, optimizer='L-BFGS-B', parallel=True, verbose=False):
         """
         Initialise le modèle de régression par processus gaussien.
         :param kernel: Fonction noyau qui prend des paramètres et des entrées, et retourne une matrice de covariance.
@@ -25,6 +25,7 @@ class so_GPRegression:
         self.sigma_k = 1.0
         self.noisy_data = noisy_data
         self.parallel = parallel
+        self.verbose = verbose
         
         self.alpha_one_y = None
         self.cholesky_K = None
@@ -273,7 +274,7 @@ class so_GPRegression:
                 jac=self.n_log_marginal_likelihood_grad,
                 method=self.optimizer,
                 bounds= bounds, 
-                options={'maxiter': maxiter}
+                options={'maxiter': maxiter, 'disp': self.verbose}
             )
             # Compute state for the optimized params
             L, sigma_k, alpha_one_y, mean_p = self._compute_state(results.x)
@@ -285,7 +286,7 @@ class so_GPRegression:
                 init_params,
                 method=self.optimizer,
                 bounds= bounds, 
-                options={'maxiter': maxiter}
+                options={'maxiter': maxiter, 'disp': self.verbose}
             )
             L, sigma_k, alpha_one_y, mean_p = self._compute_state(results.x)
             return results, L, alpha_one_y, sigma_k, mean_p
@@ -333,7 +334,7 @@ class so_GPRegression:
         return best_result
     
 
-    def fit(self, X, y, multi_start=False, n_start=5, theta_0 = None, var_noise_0=None, theta_lb=None, theta_ub=None, var_lb=None,var_ub=None, hyperparamet_optimize=True, maxiter=100, seed=13):
+    def fit(self, X, y, multi_start=True, n_start=5, theta_0 = None, var_noise_0=None, theta_lb=None, theta_ub=None, var_lb=None,var_ub=None, hyperparamet_optimize=True, maxiter=100, seed=13):
         """
         Ajuste le modèle aux données d'entraînement.
 

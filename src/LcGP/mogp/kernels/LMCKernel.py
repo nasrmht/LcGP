@@ -1,11 +1,10 @@
 """LMC kernel with fully free L_q parameters and fixed sigma_B = 1.
 
-Differences from LMCKernel:
-- All L_q[i,j] elements are free optimisation parameters (no constraint on any element).
-- sigma_B is fixed to 1.0 and is NOT a parameter.
-- Bounds for L_q elements: (-10, 10).
-- B_q = L_q @ L_q.T  (no scaling by sigma_B).
-- init_L_from_pca sets all L_q elements from SVD without masking [0,0].
+All L_q[i,j] elements are free optimisation parameters (no constraint on any element).
+sigma_B is fixed to 1.0 and is NOT a parameter.
+Bounds for L_q elements: (-10, 10).
+B_q = L_q @ L_q.T  (no scaling by sigma_B).
+init_L_from_pca sets all L_q elements from SVD without masking.
 """
 import numpy as np
 from typing import List, Tuple, Optional
@@ -13,7 +12,7 @@ from typing import List, Tuple, Optional
 from .Kernel import Kernel
 
 
-class LMCKernelFree:
+class LMCKernel:
     """
     LCM kernel with fully free co-regionalisation matrices.
 
@@ -211,6 +210,33 @@ class LMCKernelFree:
         e_i[i] = 1.0
         col_j = Lq[:, j]
         return np.outer(e_i, col_j) + np.outer(col_j, e_i)
+
+    def _compute_dB(self):
+        """
+        Calcule la dérivée de B par rapport à tous les paramètres de B (utile en ICM)
+        
+        Args:
+            
+            
+        Returns:
+            Liste des Matrice dB_q de forme (output_dim, output_dim)
+        """
+        dB = []
+        
+        for q in range(len(self.base_kernels)):
+            # Calculer la matrice de covariance spatiale k_q(x1, x2)
+            # Obtenir la matrice L_q complète et sigma_B
+            L_q = self._reconstruct_Lq(q)
+           # sigma_B = self.sigma_B_params[q]
+            
+            # Parcourir tous les paramètres (lignes 2 à output_dim-1)
+            for i in range(self.output_dim):
+                for j in range(self.rank[q]):
+                    # Calculer dB_q par rapport à L_q[i,j]
+                    dB_q = self._compute_dB_q_dL(L_q, i, j)
+                    dB.append(dB_q)
+        
+        return np.array(dB)
 
     # ------------------------------------------------------------------
     # PCA initialisation
