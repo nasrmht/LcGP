@@ -25,7 +25,7 @@ pip install .
 ```python
 import numpy as np
 from LcGP.mogp.core import MOGPR
-from LcGP.mogp.kernels.LCMKernel import LMCKernel
+from LcGP.mogp.kernels.LMCKernel import LMCKernel
 from LcGP.mogp.kernels.Kernel import RBFKernel
 
 # Define kernels
