@@ -57,9 +57,9 @@ class LMCKernel:
         start_idx = 0
         for q, r in enumerate(self.rank):
             n_params = output_dim * r  # ALL elements free
-            Lq_vec = np.random.uniform(-1.0, 1.0, n_params)
+            Lq_vec = np.random.randn(n_params) #np.random.uniform(-1.0, 1.0, n_params)
             self.Lq_params.append(Lq_vec)
-            self._bounds.extend([(-10.0, 10.0)] * n_params)
+            self._bounds.extend([(np.NINF, np.inf)] * n_params) #(-10.0, 10.0)] * n_params
             start_idx += n_params
 
         # start_idx_Lq marks the end of Lq params and start of spatial params.
