@@ -118,7 +118,7 @@ def make_constrained(input_dim: int, output_dim: int, u: np.ndarray,
 def main():
     np.random.seed(42)
 
-    N_TRAIN    = 60
+    N_TRAIN    = 20
     N_TEST     = 1000
     N_KERNELS  = 2
     RANK       = 2

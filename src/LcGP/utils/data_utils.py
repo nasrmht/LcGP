@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Tuple
 from scipy.linalg import cholesky
-from numpy.linalg import svd, eigh
+from numpy.linalg import svd
 
 def prepare_data(X: np.ndarray, y: Optional[np.ndarray], output_dim: int) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -56,8 +56,7 @@ def compute_kernel_eigendecomposition(kernel, X: np.ndarray):
     B = kernel.get_B(0)
     X_spatial = X[:n, :-1]
     K_spatial = kernel.base_kernels[0](X_spatial)
-    eigvals_B, eigvecs_B = np.linalg.eigh(B+1e-6*np.eye(B.shape[0])) # eig_via_cholesky_svd(B+1e-6*np.eye(B.shape[0])) # #
-    #print(K_spatial)
-    eigvals_K, eigvecs_K = np.linalg.eigh(K_spatial+1e-6*np.eye(n)) #eig_via_cholesky_svd(K_spatial+1e-6*np.eye(n)) #  #
+    eigvals_B, eigvecs_B = np.linalg.eigh(B)
+    eigvals_K, eigvecs_K = np.linalg.eigh(K_spatial)
 
     return eigvecs_B, eigvals_B, eigvecs_K, eigvals_K

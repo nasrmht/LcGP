@@ -8,7 +8,7 @@ def main():
     # 1. Generate synthetic Multi-Output data
     # Two outputs: y1 = sin(x), y2 = cos(x)
     np.random.seed(42)
-    n_per_output = 20
+    n_per_output = 15
     X_train = np.random.uniform(0, 10, size=(n_per_output, 1))
     
     y1 = np.sin(X_train).flatten() + np.random.normal(0, 0.05, size=n_per_output)
@@ -32,13 +32,13 @@ def main():
     
     # 3. Fit model
     print("Fitting MOGP model...")
-    model.fit(X_train, Y_train, n_restarts=3, verbose=False)
+    model.fit(X_train, Y_train, n_restarts=10, verbose=False)
     
     # 4. Predict
     print("Predicting...")
-    y_pred, y_var = model.predict(X_test, return_cov=True)
-    print("y_var shape :", y_var)
-    
+    y_pred, y_var_ = model.predict(X_test, return_cov=True)
+    print("y_var shape :", y_var_.shape)
+    y_var = np.diag(y_var_).reshape(-1, 2)
     y1_pred = y_pred[:, 0]
     y2_pred = y_pred[:, 1]
     

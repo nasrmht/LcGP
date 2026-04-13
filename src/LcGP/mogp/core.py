@@ -520,22 +520,31 @@ class MOGPR:
                 v = linalg.solve_triangular(self.L, K_star, lower=True)
 
                 # Calculer les variances prédites (diagonale de la covariance)
-                K_test_diag = np.zeros(X_test_stacked.shape[0])
-                for i in range(X_test_stacked.shape[0]):
-                    K_test_diag[i] = self.kernel(X_test_stacked[i:i+1], X_test_stacked[i:i+1])[0, 0]
+                K_test_test = self.kernel(X_test_stacked, X_test_stacked)
+                K_test_diag = np.diag(K_test_test)
+                # for i in range(X_test_stacked.shape[0]):
+                #     print("i : ", i)
+                #     print("X_test_stacked[i:i+1] : ", X_test_stacked[i:i+1])
+                #     K_test_diag[i] = self.kernel(X_test_stacked[i:i+1], X_test_stacked[i:i+1])[0, 0]
                 
                 var_pred = K_test_diag - np.diag(v.T@v)
-                var_pred = var_pred.reshape(output_dim, n_test).T 
+                var_pred = var_pred.reshape(n_test, output_dim, order='F')#.T 
             else:
                 X_train_spatial = self.X_train[:n, :-1]
                 K_x_star = self.kernel.base_kernels[0](X_test, X_train_spatial)
                 A = self.kernel.get_B(0).dot(self.U_C)
                 B = K_x_star.dot(self.U_R)
 
-                k_C_xx = np.diag(self.kernel.get_B(0))
-                k_R_xx = np.diag(self.kernel.base_kernels[0](X_test))
-                BA = np.kron(B, A)
-                var_pred = (np.kron(k_C_xx, k_R_xx) - np.sum(BA**2*self.S_kron_inv, 1) + np.exp(self.log_noise_variance)).reshape(output_dim, n_test).T
+                k_C_xx = np.diag(self.kernel.get_B(0))                    # (D,)
+                k_R_xx = np.diag(self.kernel.base_kernels[0](X_test))     # (n_test,)
+                # S_kron_inv layout: S_kron_inv[p*N + r] = 1/(S_C[p]*S_R[r] + σ²)
+                # Reshape to (N, D) with Fortran order: S_mat[r, p] = S_kron_inv[p*N + r]
+                S_mat = self.S_kron_inv.reshape(n, output_dim, order='F') # (N, D)
+                # reduction[r*, p*] = Σ_{r'',p''} B[r*,r'']² · A[p*,p'']² · S_mat[r'',p'']
+                reduction = (B ** 2) @ S_mat @ (A ** 2).T                 # (n_test, D)
+                var_pred = (np.outer(k_R_xx, k_C_xx)
+                            - reduction
+                            + np.exp(self.log_noise_variance))
 
         return y_pred, var_pred
     

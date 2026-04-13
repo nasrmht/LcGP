@@ -9,7 +9,7 @@ def main():
     
     # 1. Generate synthetic data: y1 = sin(x), y2 = -sin(x)
     np.random.seed(1337)
-    n_per_output = 40
+    n_per_output = 15
     X_train = np.sort(np.random.uniform(0, 10, size=(n_per_output, 1)), axis=0)
     
     # True functions
@@ -39,7 +39,7 @@ def main():
     # This is perfect for capturing y2 = -y1 (which is y2 = -1 * y1).
     kernel = LMCKernel(base_kernels=[rbf], output_dim=2, rank=[1])
     
-    model = MOGPR(kernel=kernel, use_efficient_lik=True)
+    model = MOGPR(kernel=kernel, use_efficient_lik=False)
     
     # 3. Fit
     print("Fitting model...")
@@ -66,8 +66,9 @@ def main():
         
     # 5. Predict
     print("\nPredicting on test grid...")
-    y_pred, y_var = model.predict(X_test)
-    
+    y_pred, y_var = model.predict(X_test, return_cov=False)
+    #y_var = np.diag(y_var).reshape(-1, 2)
+   # print("y_var shape :", y_var)
     y1_pred = y_pred[:, 0]
     y2_pred = y_pred[:, 1]
     y1_std = np.sqrt(y_var[:, 0])

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from LcGP.mogp.core import MOGPR
-from LcGP.mogp.kernels.LCMKernel import LMCKernel
+from LcGP.mogp.kernels.LMCKernel import LMCKernel
 from LcGP.mogp.kernels.Kernel import RBFKernel
 
 def main():
