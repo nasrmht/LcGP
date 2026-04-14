@@ -8,11 +8,11 @@ class LMCKernelConstrained:
     
     Le noyau est défini comme une somme de produits de Kronecker:
     K(x, x') = sum_{q=1}^Q B_q ⊗ k_q(x, x')
-    
-    où B_q = sigma_B_q * (L_q @ L_q.T), et L_q est contraint tel que u.T @ L_q = 0.
+
+    où B_q = L_q @ L_q.T (sigma_B est fixé à 1, non estimé), et L_q est contraint tel que u.T @ L_q = 0.
     Le premier élément de chaque colonne de L_q est fixé comme:
     L_q[0, j] = -sum(u[1:] * L_q[1:, j]) / u[0]
-    
+
     Cette contrainte garantit que le produit scalaire entre u et les sorties est nul.
     """
     
@@ -56,8 +56,6 @@ class LMCKernelConstrained:
         # Initialiser les matrices L_q (sans les premières lignes qui seront calculées)
         self.Lq_params = []
 
-        self.sigma_B_params = np.ones(len(self.rank)) * 1.0  # Initialisation à 1.0
-        
         self._bounds = []
         np.random.seed(seed)
         start_idx = 0
@@ -72,9 +70,9 @@ class LMCKernelConstrained:
             
             if self.output_dim > 2:
                 n_params = (self.output_dim - 1) * r
-                Lq_vec = np.random.uniform(-0.5, 0.5, n_params)
+                Lq_vec = np.random.randn(n_params) # np.random.uniform(-0.5, 0.5, n_params)
                 self.Lq_params.append(Lq_vec)
-                self._bounds.extend([(-1.0, 1.0)] * n_params)
+                self._bounds.extend([(-10.0, 10.0)] * n_params)
                 start_idx += n_params
             else:
                 pass
@@ -82,7 +80,7 @@ class LMCKernelConstrained:
         self.start_idx_Lq = start_idx
 
         # Ajouter les bornes pour les facteurs d'échelle sigma_B (positifs)
-        self._bounds.extend([(1.0, 10.0)] * len(self.rank))
+        #self._bounds.extend([(1.0, 10.0)] * len(self.rank))
         # Ajouter les bornes pour les paramètres des noyaux de base
         for kernel in self.base_kernels:
             self._bounds.extend(kernel.bounds)
@@ -90,11 +88,10 @@ class LMCKernelConstrained:
     @property
     def params(self) -> np.ndarray:
         """Retourne tous les hyperparamètres du noyau LMC."""
-        params = np.concatenate(self.Lq_params) if self.output_dim > 2 else np.array([])
-        params = np.concatenate([params, self.sigma_B_params])
+        parts = list(self.Lq_params) if self.output_dim > 2 else []
         for kernel in self.base_kernels:
-            params = np.concatenate([params, kernel.params])
-        return params
+            parts.append(kernel.params)
+        return np.concatenate(parts) if parts else np.array([])
     
     @params.setter
     def params(self, params: np.ndarray):
@@ -102,19 +99,13 @@ class LMCKernelConstrained:
         start_idx = 0
         if self.output_dim > 2:
             for q, r in enumerate(self.rank):
-                n_params_Lq = (self.output_dim - 1) * r 
+                n_params_Lq = (self.output_dim - 1) * r
                 self.Lq_params[q] = params[start_idx:start_idx + n_params_Lq]
                 start_idx += n_params_Lq
-        
-        # Extraire les paramètres sigma_B
-        self.sigma_B_params = params[start_idx:start_idx + len(self.rank)]
-        start_idx += len(self.rank)
-        
-        # Extraire les paramètres des noyaux de base
         for kernel in self.base_kernels:
-            n_params_kernel = kernel.get_n_params()
-            kernel.params = params[start_idx:start_idx + n_params_kernel]
-            start_idx += n_params_kernel
+            n = kernel.get_n_params()
+            kernel.params = params[start_idx:start_idx + n]
+            start_idx += n
     
     @property
     def bounds(self) -> List[Tuple[float, float]]:
@@ -147,17 +138,17 @@ class LMCKernelConstrained:
         return L_q
     
     def get_B(self, q: int) -> np.ndarray:
-        """Retourne la matrice de corégionalisation B_q = sigma_B * L_q @ L_q.T."""
+        """Retourne la matrice de corégionalisation B_q = L_q @ L_q.T."""
         L_q = self._reconstruct_Lq(q)
-        B_q = L_q @ L_q.T
-        return B_q * self.sigma_B_params[q]
+        return L_q @ L_q.T
     
     def get_L(self, q: int) -> np.ndarray:
         """Retourne la matrice L_q complète."""
         return self._reconstruct_Lq(q)
     
     def get_sigma_B(self, q: int) -> float:
-        return self.sigma_B_params[q]
+        """Fixé à 1.0 (non estimé)."""
+        return 1.0
     
     def verify_constraint(self, q: int, tol: float = 1e-10) -> bool:
         """Vérifie que la contrainte u.T @ L_q = 0 est satisfaite."""
@@ -213,20 +204,19 @@ class LMCKernelConstrained:
             for q in range(len(self.base_kernels)):
                 K_spatial = self.base_kernels[q](x1, x2)
                 L_q = self._reconstruct_Lq(q)
-                sigma_B = self.sigma_B_params[q]
-                
-                for i in range(1, self.output_dim): # Skip row 0
+
+                for i in range(1, self.output_dim):  # Skip row 0 (constrained)
                     for j in range(self.rank[q]):
-                        dB_q = self._compute_dB_q_dL(q, i, j, L_q, sigma_B)
+                        dB_q = self._compute_dB_q_dL(q, i, j, L_q)
                         gradients[param_idx] = np.kron(dB_q, K_spatial)
                         param_idx += 1
                         
         # Gradients wrt sigma_B
-        for q in range(len(self.base_kernels)):
-            K_spatial = self.base_kernels[q](x1, x2)
-            dB_q = self._compute_dB_q_dsigma(q)
-            gradients[param_idx] = np.kron(dB_q, K_spatial)
-            param_idx += 1
+        # for q in range(len(self.base_kernels)):
+        #     K_spatial = self.base_kernels[q](x1, x2)
+        #     dB_q = self._compute_dB_q_dsigma(q)
+        #     gradients[param_idx] = np.kron(dB_q, K_spatial)
+        #     param_idx += 1
             
         # Gradients wrt spatial kernels
         for q, kernel in enumerate(self.base_kernels):
@@ -238,14 +228,13 @@ class LMCKernelConstrained:
                 
         return gradients
 
-    def _compute_dB_q_dL(self, q: int, i: int, j: int, L_q: np.ndarray, sigma_B: float) -> np.ndarray:
+    def _compute_dB_q_dL(self, q: int, i: int, j: int, L_q: np.ndarray) -> np.ndarray:
+        """dB_q / dL_q[i, j], accounting for the constrained row L_q[0, j]."""
         dL_q = np.zeros_like(L_q)
         dL_q[i, j] = 1.0
-        # Derivative of constrained row L_q[0,j]
+        # Derivative of constrained row: d(L_q[0,j])/d(L_q[i,j]) = -u[i]/u[0]
         dL_q[0, j] = -(self.u_vector[i]) / self.u_vector[0]
-        
-        dB_q = (dL_q @ L_q.T + L_q @ dL_q.T) * sigma_B
-        return dB_q
+        return dL_q @ L_q.T + L_q @ dL_q.T
 
     def _compute_dB(self):
         """
@@ -260,23 +249,15 @@ class LMCKernelConstrained:
         dB = []
         if self.output_dim > 2:
             for q in range(len(self.base_kernels)):
-                # Calculer la matrice de covariance spatiale k_q(x1, x2)
-                
-                # Obtenir la matrice L_q complète et sigma_B
                 L_q = self._reconstruct_Lq(q)
-                sigma_B = self.sigma_B_params[q]
-                
-                # Parcourir tous les paramètres (lignes 2 à output_dim-1)
                 for i in range(1, self.output_dim):
                     for j in range(self.rank[q]):
-                        # Calculer dB_q par rapport à L_q[i,j]
-                        dB_q = self._compute_dB_q_dL(q, i, j, L_q, sigma_B)
-                        dB.append(dB_q)
+                        dB.append(self._compute_dB_q_dL(q, i, j, L_q))
         
-        # On ajoute la dérivée de B par rapport à sigma_B est simplement B_unit = L_q @ L_q.T
-        for q in range(len(self.base_kernels)):
-            dB_q = self._compute_dB_q_dsigma(q)
-            dB.append(dB_q)
+        # # On ajoute la dérivée de B par rapport à sigma_B est simplement B_unit = L_q @ L_q.T
+        # for q in range(len(self.base_kernels)):
+        #     dB_q = self._compute_dB_q_dsigma(q)
+        #     dB.append(dB_q)
         
         return dB
 

@@ -120,8 +120,8 @@ def main():
 
     N_TRAIN    = 20
     N_TEST     = 1000
-    N_KERNELS  = 2
-    RANK       = 2
+    N_KERNELS  = 3
+    RANK       = 1
     N_RESTARTS = 5
     MAXITER    = 300
     NOISE_STD  = 0.0    # bruit relatif (fraction de l'écart-type par sortie)
