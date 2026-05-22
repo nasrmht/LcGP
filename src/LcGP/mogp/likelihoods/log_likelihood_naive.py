@@ -26,7 +26,7 @@ def compute_log_likelihood_naive(kernel_,params,X: np.ndarray, y: np.ndarray, lo
         log_likelihood = -0.5 * np.dot(y, alpha) - np.sum(np.log(np.diag(L))) - 0.5 * n_total * np.log(2 * np.pi)
         return -log_likelihood, L, alpha
     except np.linalg.LinAlgError:
-        return 1e10, L, alpha
+        return 1e10, None, None
 
 
 def compute_log_likelihood_gradient_naive(kernel_, params, X: np.ndarray, y: np.ndarray, log_noise_variance: float):

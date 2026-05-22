@@ -261,7 +261,7 @@ class MOGPR:
         # Initialiser la meilleure log-vraisemblance à une valeur élevée
         best_nll = np.inf
         best_params = None
-        #np.random.seed(seed)
+        np.random.seed(seed)
         
         # Génération des points de départ
         initial_params = []

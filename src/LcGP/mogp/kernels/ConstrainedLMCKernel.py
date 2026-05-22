@@ -70,7 +70,7 @@ class LMCKernelConstrained:
             
             if self.output_dim > 2:
                 n_params = (self.output_dim - 1) * r
-                Lq_vec = np.random.randn(n_params) # np.random.uniform(-0.5, 0.5, n_params)
+                Lq_vec =  np.random.randn(n_params) #np.random.uniform(-0.5, 0.5, n_params) #
                 self.Lq_params.append(Lq_vec)
                 self._bounds.extend([(-10.0, 10.0)] * n_params)
                 start_idx += n_params
