@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from LcGP.mogp.core import MOGPR
 from LcGP.sogp.core import so_GPRegression
-from LcGP.mogp.kernels.LCMKernel import LMCKernel
+from LcGP.mogp.kernels.LMCKernel import LMCKernel
 from LcGP.mogp.kernels.Kernel import RBFKernel as MoGP_RBFKernel
 from LcGP.sogp.kernels.Kernel import RBFKernel as SoGP_RBFKernel
 

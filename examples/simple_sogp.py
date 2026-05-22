@@ -22,7 +22,7 @@ def main():
     model.fit(X_train, y_train, multi_start=True, n_start=5)
     print(f"Optimized hyperparameters: {model.hyperparameters}")
     
-    # 4. Predict
+    # 4. Predict 
     print("Predicting...")
     y_pred, y_var = model.predict(X_test)
     y_std = np.sqrt(y_var)
