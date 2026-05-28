@@ -42,7 +42,7 @@ def main():
         base_kernels=[k1, k2, k3], 
         output_dim=3, 
         u_vector=u_vector,
-        rank=[1, 1, 1],
+        latent_dim=[1, 1, 1],
         seed=42
     )
     

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from LcGP.mogp.core import MOGPR
-from LcGP.mogp.kernels.LCMKernel import LMCKernel
+from LcGP.mogp.kernels.LMCKernel import LMCKernel
 from LcGP.mogp.kernels.Kernel import RBFKernel
 
 def main():
@@ -33,12 +33,12 @@ def main():
     
     # Model 1: Efficient
     rbf1 = RBFKernel(input_dim=1)
-    kernel1 = LMCKernel(base_kernels=[rbf1], output_dim=2, rank=[1])
+    kernel1 = LMCKernel(base_kernels=[rbf1], output_dim=2, latent_dim=[1])
     model_eff = MOGPR(kernel=kernel1, use_efficient_lik=True, verbose=False)
     
     # Model 2: Naive
     rbf2 = RBFKernel(input_dim=1)
-    kernel2 = LMCKernel(base_kernels=[rbf2], output_dim=2, rank=[1])
+    kernel2 = LMCKernel(base_kernels=[rbf2], output_dim=2, latent_dim=[1])
     model_naive = MOGPR(kernel=kernel2, use_efficient_lik=False, verbose=False) # Naive
     
     # 3. Fit

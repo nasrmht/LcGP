@@ -20,6 +20,6 @@ def test_sogp_init():
 
 def test_mogp_init():
     rbf = MoGP_RBFKernel(input_dim=1)
-    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, rank=[2])
+    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, latent_dim=[2])
     model = MOGPR(kernel=kernel)
     assert model is not None

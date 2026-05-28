@@ -25,8 +25,8 @@ def main():
     # LcGP.mogp.kernels.Kernel.RBFKernel takes input_dim
     rbf = RBFKernel(input_dim=1)
     
-    # LMC Kernel with rank 2 for 2 outputs (full rank)
-    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, rank=[2])
+    # LMC Kernel with latent_dim 2 for 2 outputs (full latent_dim)
+    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, latent_dim=[2])
     
     model = MOGPR(kernel=kernel, use_efficient_lik=False)
     

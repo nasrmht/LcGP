@@ -97,18 +97,18 @@ def constraint_error(Y_pred: np.ndarray, u: np.ndarray) -> dict:
 # Model factories
 # ------------------------------------------------------------------
 
-def make_lmc(input_dim: int, output_dim: int, n_kernels: int, rank: int,
+def make_lmc(input_dim: int, output_dim: int, n_kernels: int, latent_dim: int,
              seed: int = 42) -> LMCKernel:
     bk = [Matern52Kernel(input_dim=input_dim) for _ in range(n_kernels)]
     return LMCKernel(base_kernels=bk, output_dim=output_dim,
-                     rank=[rank] * n_kernels, seed=seed)
+                     latent_dim=[latent_dim] * n_kernels, seed=seed)
 
 
 def make_constrained(input_dim: int, output_dim: int, u: np.ndarray,
-                     n_kernels: int, rank: int, seed: int = 42) -> LMCKernelConstrained:
+                     n_kernels: int, latent_dim: int, seed: int = 42) -> LMCKernelConstrained:
     bk = [Matern52Kernel(input_dim=input_dim) for _ in range(n_kernels)]
     return LMCKernelConstrained(base_kernels=bk, output_dim=output_dim,
-                                u_vector=u, rank=[rank] * n_kernels, seed=seed)
+                                u_vector=u, latent_dim=[latent_dim] * n_kernels, seed=seed)
 
 
 # ------------------------------------------------------------------
@@ -140,7 +140,7 @@ def main():
     print("Benchmark : LMCKernel vs LMCKernelConstrained")
     print("=" * 65)
     print(f"  N_train={N_TRAIN}, N_test={N_TEST}")
-    print(f"  n_kernels={N_KERNELS}, rank={RANK}, n_restarts={N_RESTARTS}")
+    print(f"  n_kernels={N_KERNELS}, latent_dim={RANK}, n_restarts={N_RESTARTS}")
     print(f"  Contrainte : f1 + f2 + f3 = 0  (u = [1, 1, 1])")
     print(f"  Fonctions  : f1=Ishigami2D (normalisée), f2=Branin (normalisée), f3=-f1-f2")
 

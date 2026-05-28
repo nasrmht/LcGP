@@ -27,7 +27,7 @@ def main():
     # 2. Setup Model
     print("Setting up MOGP model with LMC Kernel...")
     rbf = RBFKernel(input_dim=1)
-    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, rank=[1])
+    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, latent_dim=[1])
     
     model = MOGPR(kernel=kernel, use_efficient_lik=True)
     

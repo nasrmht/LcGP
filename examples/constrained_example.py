@@ -35,15 +35,15 @@ def main():
     rbf = RBFKernel(input_dim=1)
     
     # LMC Kernel
-    # rank=1 implies that the two outputs are linear combinations of 1 latent function.
+    # latent_dim=1 implies that the two outputs are linear combinations of 1 latent function.
     # This is perfect for capturing y2 = -y1 (which is y2 = -1 * y1).
-    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, rank=[1])
+    kernel = LMCKernel(base_kernels=[rbf], output_dim=2, latent_dim=[1])
     
     model = MOGPR(kernel=kernel, use_efficient_lik=False)
     
     # 3. Fit
     print("Fitting model...")
-    # Using efficient likelihood since rank=1 and 1 base kernel
+    # Using efficient likelihood since latent_dim=1 and 1 base kernel
     model.fit(X_train, Y_train, n_restarts=5, verbose=False, use_init_pca=True)
     
     # 4. Analyze Learned Coregionalization Matrix B
